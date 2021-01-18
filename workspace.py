@@ -10,7 +10,7 @@ class workspace():
         self.height = resolution['height']
         self.slots: slot = []
         #Object to hold slot->window connection
-        self.assingment = []
+        self.assingment = SlotWindow()
 
         self.slots.append(slot(margin(0, O.H), 
                                 margin(self.width, O.H),
@@ -24,34 +24,36 @@ class workspace():
 
 
     def getEmptySlot(self) -> slot:
+        #Ako nije dodana nekom prozoru
         for s in self.slots:
-            #Ako nije dodana nekom prozoru
-            if s not in [a[0] for a in self.assingment]:
+            if not self.assingment.exists(s):
                 return s
 
         return None
 
     def addWindow(self, w: window):
-        for a in self.assingment:
-            if w == a[1]:
-                print("Window Exists")
-                w.updateWindow(a[0])
-                w.focus()
-                return
-        #Ako postoji prazan slot
-        s = None
-        if len(self.slots) > len(self.assingment):
+        s = self.assingment.getSlot(w)
+        #If windows is allready added to slot
+        if s is not None:
+            print("Window Exists")
+            w.updateWindow(s)
+            w.focus()
+            return
+
+        #If there is a vacant slot
+        if len(self.slots) > self.assingment.length():
             print("Assigning to empty slot")
             s = self.getEmptySlot()
             if s is not None:
-                self.assingment.append([s, w])
+                self.assingment.addPair(s, w)
             else:
-                assert len(self.slots) == len(self.assingment)
+                assert len(self.slots) == self.assingment.length() 
 
-        elif len(self.slots) == len(self.assingment):
+        #If there are no vacant slots, create new one
+        elif len(self.slots) == self.assingment.length():
             print("Creating new slot")
             s = self.newSlot()
-            self.assingment.append([s, w])
+            self.assingment.addPair(s, w)
 
         w.updateWindow(s)
         w.focus()
@@ -81,9 +83,7 @@ class workspace():
         s.setMargins(rightMargin=newMargin)
 
         #Refresh window of chosen slot
-        for a in self.assingment:
-            if s is a[0]:
-                a[1].updateWindow(s)
+        self.assingment.getWin(s).updateWindow(s)
 
         return newSlot
 
@@ -103,11 +103,50 @@ class workspace():
         s.setMargins(botMargin=newMargin)
 
         #Refresh window of chosen slot
-        for a in self.assingment:
-            if s is a[0]:
-                a[1].updateWindow(s)
+        self.assingment.getWin(s).updateWindow(s)
 
         return newSlot
+
+    def updateAll(self):
+        for p in self.assingment.pairs:
+            p[1].updateWindow(p[0])
+
+    def swapSlots(self, slot1, slot2):
+        self.assingment.swapSlots(slot1, slot2)
+        self.updateAll()
+
+    def moveSlotLeft(self, s: slot):
+        #Looking for slots whose right margin is the selected slot's leftMargin
+        candidates = self.assingment.getSlotsByMargin(s.leftMargin, 'R')
+        if len(candidates) == 0:
+            print("Cant move")
+        else:
+            self.swapSlots(s, candidates[0])
+
+    def moveSlotRight(self, s: slot):
+        #Looking for slots whose left margin is the selected slot's rightMargin
+        candidates = self.assingment.getSlotsByMargin(s.rightMargin, 'L')
+        if len(candidates) == 0:
+            print("Cant move")
+        else:
+            self.swapSlots(s, candidates[0])
+
+    def moveSlotUp(self, s: slot):
+        #Looking for slots whose bot margin is the selected slot's topMargin
+        candidates = self.assingment.getSlotsByMargin(s.topMargin, 'B')
+        if len(candidates) == 0:
+            print("Cant move")
+        else:
+            self.swapSlots(s, candidates[0])
+
+    def moveSlotDown(self, s: slot):
+        #Looking for slots whose top margin is the selected slot's botMargin
+        candidates = self.assingment.getSlotsByMargin(s.botMargin, 'T')
+        if len(candidates) == 0:
+            print("Cant move")
+        else:
+            self.swapSlots(s, candidates[0])
+
 
     def __str__(self) -> str:
         return str(self.slots)
