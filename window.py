@@ -11,6 +11,11 @@ class window():
         win32gui.ShowWindow(self.id, win32con.SW_NORMAL)
         win32gui.MoveWindow(self.id, slot.leftMargin.value, slot.topMargin.value, w, h, True)
 
+        rect = win32gui.GetWindowRect(self.id)
+
+        if any([rect[0] != slot.leftMargin.value, rect[1] != slot.topMargin.value, rect[2]-rect[0] != w, rect[3]-rect[1] != h]):
+            print("Window", win32gui.GetWindowText(self.id), "cannot be smaller")
+
     def resizeWindow(self, w, h):
         self.w, self.h = w, h
 
@@ -22,8 +27,9 @@ class window():
                 win32gui.ShowWindow(self.id, win32con.SW_RESTORE)
                 print("IsIconic")
             win32gui.SetForegroundWindow(self.id)
-        except:
-            print("Access?")
+        except Exception as e:
+            print("Error focusing")
+            print(str(e))
 
     def __eq__(self, o) -> bool:
         return self.id == o.id

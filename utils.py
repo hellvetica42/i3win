@@ -54,14 +54,14 @@ class SlotWindow():
     def addPair(self, slot, window):
         self.pairs.append([slot, window])
 
-    def getSlot(self, w: window):
+    def getSlot(self, w: window) -> slot:
         for p in self.pairs:
             if p[1] == w:
                 return p[0]
 
         return None
 
-    def getWin(self, s: slot):
+    def getWin(self, s: slot) -> window:
         for p in self.pairs:
             if p[0] == s:
                 return p[1]
@@ -105,6 +105,8 @@ class SlotWindow():
         return slots
 
     def getSlotByWindowId(self, id) -> slot:
+        if id == 0:
+            print("Err null id")
         for p in self.pairs:
             if p[1].id == id:
                 return p[0]
@@ -114,24 +116,6 @@ class SlotWindow():
             if p[1].id == id:
                 return p[1]
 
-    def getSlotByAproxPosition(self, slot: slot, direction):
-        candidates = []
-        if direction == 'L':
-            candidates = self.getSlotsByMargin(slot.leftMargin, 'R')
-
-
-        topVal = slot.topMargin.value
-
-        def diff(s: slot):
-            return abs(topVal-s.topMargin.value)
-        #Values of differences of top margins 
-        val = list(map(diff, candidates))
-
-        print(val)
-
-        winner = candidates[val.index(min(val))]
-
-        print(self.getWin(winner).id)
         
 
 

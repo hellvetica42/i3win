@@ -54,6 +54,9 @@ class workspace():
             print("Creating new slot")
             s = self.newSlot()
             self.assingment.addPair(s, w)
+            print(s)
+
+        print(win32gui.GetWindowText(w.id))
 
         w.updateWindow(s)
         w.focus()
@@ -68,7 +71,7 @@ class workspace():
 
 
     def splitHorizontal(self, s: slot) -> slot:
-        newMargin = margin(floor(s.rightMargin.value/2), s.rightMargin.type)
+        newMargin = margin(floor((s.rightMargin.value-s.leftMargin.value)/2)+s.leftMargin.value, s.rightMargin.type)
         
         #new and old margin for left/right
         newSlot = slot(leftMargin=newMargin,
@@ -111,41 +114,107 @@ class workspace():
         for p in self.assingment.pairs:
             p[1].updateWindow(p[0])
 
+    def updateWindows(self, win1, win2):
+        for p in self.assingment.pairs:
+            if p[1] == win1 or p[1] == win2:
+                p[1].updateWindow(p[0])
+        pass
+
+
     def swapSlots(self, slot1, slot2):
+        w1 = self.assingment.getWin(slot1)
+        w2 = self.assingment.getWin(slot2)
         self.assingment.swapSlots(slot1, slot2)
-        self.updateAll()
+        self.updateWindows(w1, w2)
 
     def moveSlotLeft(self, s: slot):
         #Looking for slots whose right margin is the selected slot's leftMargin
-        candidates = self.assingment.getSlotsByMargin(s.leftMargin, 'R')
-        if len(candidates) == 0:
+        target = self.getSlotByAproxPosition(s, 'L')
+        if target is None:
             print("Cant move")
         else:
-            self.swapSlots(s, candidates[0])
+            self.swapSlots(s, target)
 
     def moveSlotRight(self, s: slot):
-        #Looking for slots whose left margin is the selected slot's rightMargin
-        candidates = self.assingment.getSlotsByMargin(s.rightMargin, 'L')
-        if len(candidates) == 0:
+        #Looking for slots whose right margin is the selected slot's leftMargin
+        target = self.getSlotByAproxPosition(s, 'R')
+        if target is None:
             print("Cant move")
         else:
-            self.swapSlots(s, candidates[0])
+            self.swapSlots(s, target)
 
     def moveSlotUp(self, s: slot):
         #Looking for slots whose bot margin is the selected slot's topMargin
-        candidates = self.assingment.getSlotsByMargin(s.topMargin, 'B')
-        if len(candidates) == 0:
+        target = self.getSlotByAproxPosition(s, 'T')
+        if target is None:
             print("Cant move")
         else:
-            self.swapSlots(s, candidates[0])
+            self.swapSlots(s, target)
 
     def moveSlotDown(self, s: slot):
         #Looking for slots whose top margin is the selected slot's botMargin
-        candidates = self.assingment.getSlotsByMargin(s.botMargin, 'T')
-        if len(candidates) == 0:
+        target = self.getSlotByAproxPosition(s, 'B')
+        if target is None:
             print("Cant move")
         else:
-            self.swapSlots(s, candidates[0])
+            self.swapSlots(s, target)
+
+    def moveFocus(self, hwdn, direction):
+        source = self.assingment.getSlotByWindowId(hwdn)
+
+        target = self.getSlotByAproxPosition(source, direction)
+
+        if target is None:
+            print("Cant move there")
+            return
+
+        win = self.assingment.getWin(target)
+
+        # print(win32gui.GetWindowText(win.id))
+
+        win.focus()
+
+
+    def getSlotByAproxPosition(self, slot: slot, direction):
+        candidates = []
+        if direction == 'L':
+            candidates = self.assingment.getSlotsByMargin(slot.leftMargin, 'R')
+        if direction == 'R':
+            candidates = self.assingment.getSlotsByMargin(slot.rightMargin, 'L')
+        if direction == 'T':
+            candidates = self.assingment.getSlotsByMargin(slot.topMargin, 'B')
+        if direction == 'B':
+            candidates = self.assingment.getSlotsByMargin(slot.botMargin, 'T')
+
+        if len(candidates) == 0:
+            return None
+
+        if direction == 'L' or direction == 'R':
+
+            topVal = slot.topMargin.value
+
+            def diff(s: slot):
+                return abs(topVal-s.topMargin.value)
+            #Values of differences of top margins 
+            val = list(map(diff, candidates))
+
+            winner = candidates[val.index(min(val))]
+
+        else:
+            leftVal = slot.leftMargin.value
+
+            def diff(s: slot):
+                return abs(leftVal-s.leftMargin.value)
+            #Values of differences of top margins 
+            val = list(map(diff, candidates))
+
+            winner = candidates[val.index(min(val))]
+
+        # print(win32gui.GetWindowText(self.assingment.getWin(winner).id))
+        print("AproxPosition is slot", winner)
+
+        return winner
+
 
 
     def __str__(self) -> str:
