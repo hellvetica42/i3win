@@ -1,224 +1,190 @@
 import win32gui
-from utils import *
-from window import window
+from panel import panel #type:ignore
+from i3utils import margin #type:ignore
 from math import floor
 
 class workspace():
-
     def __init__(self, **resolution):
         self.width = resolution['width']
         self.height = resolution['height']
-        self.slots: slot = []
-        #Object to hold slot->window connection
-        self.assingment = SlotWindow()
+        self.panels: panel = []
 
-        self.slots.append(slot(margin(0, O.H), 
-                                margin(self.width, O.H),
+    def addNewWindow(self, id):
+        if self.containsWindow(id):
+            print("Window already indexed")
+            return
+        #If first panel
+        if len(self.panels) == 0:
+            p = panel(self.height, margin(value=0), margin(value=self.width))
+            p.addNewWindow(id)
+            p.update()
+            self.panels.append(p)
+        else:
+            target = self.getLargestPanel()
 
-                                margin(0, O.V),
-                                margin(self.height, O.V)))
+            if target.height/len(target.slots) > target.getWidth():
+                #Split vertical #New slot 
+                    target.addNewWindow(id)
 
-    def getLargestSlot(self) -> slot:
-        m = lambda s: s.getSlotArea() 
-        return max(self.slots, key=m)
+            else:
+                #Split horisontal #New panel 
+                newPanel = self.addNewPanel()
+                newPanel.addNewWindow(id)
+
+            self.update()
+
+    def update(self):
+        for p in self.panels:
+            p.update()
+
+    def addNewPanel(self) -> panel:
+        newPanel = panel(self.height, margin(value=0), margin(value=0))
+        self.panels.append(newPanel)
+
+        self.updateLayout()
+
+        return newPanel
+
+    def updateLayout(self):
+        panelWidth = floor(self.width / len(self.panels))
+
+        margins = []
+        for i in range(len(self.panels) + 1):
+            margins.append(margin(i*panelWidth))
+
+        for i, p in enumerate(self.panels):
+            p.setMargins(margins[i], margins[i+1])
+
+        self.update()
 
 
-    def getEmptySlot(self) -> slot:
-        #Ako nije dodana nekom prozoru
-        for s in self.slots:
-            if not self.assingment.exists(s):
-                return s
+    def getLargestPanel(self) -> panel:
+        def diff(p: panel):
+            return p.getSurface()/len(p.slots)
 
+        sizes = list(map(diff, self.panels))
+
+        largest = self.panels[sizes.index(max(sizes))]
+
+        return largest
+
+    def getPanelByMargin(self, m: margin, direction) -> panel:
+        for p in self.panels:
+            if direction == 'L':
+                if p.leftMargin == m:
+                    return p
+                pass
+
+            elif direction == 'R':
+                if p.rightMargin == m:
+                    return p
+                pass
         return None
 
-    def addWindow(self, w: window):
-        s = self.assingment.getSlot(w)
-        #If windows is allready added to slot
-        if s is not None:
-            print("Window Exists")
-            w.updateWindow(s)
-            w.focus()
+    def swapPanels(self, p1, p2):
+        m1, m2 = p1.leftMargin, p1.rightMargin
+        p1.leftMargin, p1.rightMargin = p2.leftMargin, p2.rightMargin
+        p2.leftMargin, p2.rightMargin = m1, m2
+
+    def containsWindow(self, id) -> bool:
+        if any([p.containsWindow(id) for p in self.panels]):
+            return True
+        return False
+
+    def getPanelWithWindow(self, id) -> panel:
+        for p in self.panels:
+            if p.containsWindow(id):
+                return p
+        return None
+
+    def movePanel(self, source, direction):
+        target = None
+        if direction == 'L':
+            target = self.getPanelByMargin(source.leftMargin, 'R')
+
+        elif direction == 'R':
+            target = self.getPanelByMargin(source.rightMargin, 'L')
+
+        if target is None:
+            print("Cant move panel there")
             return
 
-        #If there is a vacant slot
-        if len(self.slots) > self.assingment.length():
-            print("Assigning to empty slot")
-            s = self.getEmptySlot()
-            if s is not None:
-                self.assingment.addPair(s, w)
-            else:
-                assert len(self.slots) == self.assingment.length() 
+        self.swapPanels(source, target)
+        self.update()
 
-        #If there are no vacant slots, create new one
-        elif len(self.slots) == self.assingment.length():
-            print("Creating new slot")
-            s = self.newSlot()
-            self.assingment.addPair(s, w)
-            print(s)
-
-        print(win32gui.GetWindowText(w.id))
-
-        w.updateWindow(s)
-        w.focus()
-
-    def newSlot(self):
-
-        oldSlot = self.getLargestSlot()
-        if oldSlot.getSlotHeight() > oldSlot.getSlotWidth():
-            return self.splitVertical(oldSlot)
-        else:
-            return self.splitHorizontal(oldSlot)
-
-
-    def splitHorizontal(self, s: slot) -> slot:
-        newMargin = margin(floor((s.rightMargin.value-s.leftMargin.value)/2)+s.leftMargin.value, s.rightMargin.type)
-        
-        #new and old margin for left/right
-        newSlot = slot(leftMargin=newMargin,
-                        rightMargin=s.rightMargin,
-                        #Stays the same
-                        topMargin=s.topMargin,
-                        botMargin=s.botMargin)
-
-        self.slots.append(newSlot)
-
-        #Halves the width of existing slot
-        s.setMargins(rightMargin=newMargin)
-
-        #Refresh window of chosen slot
-        self.assingment.getWin(s).updateWindow(s)
-
-        return newSlot
-
-    def splitVertical(self, s: slot) -> slot:
-        newMargin = margin(floor(s.botMargin.value/2), s.botMargin.type)
-        
-        #Stays the same
-        newSlot = slot(leftMargin=s.leftMargin,
-                        rightMargin=s.rightMargin,
-                        #new and old margin for bot/top
-                        topMargin=newMargin,
-                        botMargin=s.botMargin)
-
-        self.slots.append(newSlot)
-
-        #Halves the height of existing slot
-        s.setMargins(botMargin=newMargin)
-
-        #Refresh window of chosen slot
-        self.assingment.getWin(s).updateWindow(s)
-
-        return newSlot
-
-    def updateAll(self):
-        for p in self.assingment.pairs:
-            p[1].updateWindow(p[0])
-
-    def updateWindows(self, win1, win2):
-        for p in self.assingment.pairs:
-            if p[1] == win1 or p[1] == win2:
-                p[1].updateWindow(p[0])
-        pass
-
-
-    def swapSlots(self, slot1, slot2):
-        w1 = self.assingment.getWin(slot1)
-        w2 = self.assingment.getWin(slot2)
-        self.assingment.swapSlots(slot1, slot2)
-        self.updateWindows(w1, w2)
-
-    def moveSlotLeft(self, s: slot):
-        #Looking for slots whose right margin is the selected slot's leftMargin
-        target = self.getSlotByAproxPosition(s, 'L')
+    def moveFocus(self, id, direction):
+        target = self.getSlotByAproxPosition(id, direction)
         if target is None:
-            print("Cant move")
+            print("Cant move focus. No target slot")
         else:
-            self.swapSlots(s, target)
+            target.focus()
 
-    def moveSlotRight(self, s: slot):
-        #Looking for slots whose right margin is the selected slot's leftMargin
-        target = self.getSlotByAproxPosition(s, 'R')
-        if target is None:
-            print("Cant move")
-        else:
-            self.swapSlots(s, target)
+    def moveWindow(self, id, direction):
+        sourcePanel = self.getPanelWithWindow(id)
+        if sourcePanel is None:
+            print("No such window")
+            return
 
-    def moveSlotUp(self, s: slot):
-        #Looking for slots whose bot margin is the selected slot's topMargin
-        target = self.getSlotByAproxPosition(s, 'T')
-        if target is None:
-            print("Cant move")
-        else:
-            self.swapSlots(s, target)
+        sourceSlot = sourcePanel.getSlotWithWindow(id)
 
-    def moveSlotDown(self, s: slot):
-        #Looking for slots whose top margin is the selected slot's botMargin
-        target = self.getSlotByAproxPosition(s, 'B')
-        if target is None:
-            print("Cant move")
-        else:
-            self.swapSlots(s, target)
+        if sourcePanel is None:
+            print("No such window")
+            return
 
-    def moveFocus(self, hwdn, direction):
-        source = self.assingment.getSlotByWindowId(hwdn)
+        targetPanel = None
+        #Within same panel #Only swaps
+        if direction == 'U' or direction == 'D':
+            sourcePanel.moveSlot(sourceSlot, direction)
+            return
 
-        target = self.getSlotByAproxPosition(source, direction)
+        #Between panels
+        elif direction == 'L':
+            targetPanel = self.getPanelByMargin(sourcePanel.leftMargin, 'R')
+            pass
+        elif direction == 'R':
+            targetPanel = self.getPanelByMargin(sourcePanel.rightMargin, 'L')
 
-        if target is None:
+        if targetPanel is None:
             print("Cant move there")
             return
 
-        win = self.assingment.getWin(target)
+        targetPanel.addSlot(sourceSlot)
+        if sourcePanel.removeSlot(sourceSlot):
+            self.panels.remove(sourcePanel)
+            self.updateLayout()
 
-        # print(win32gui.GetWindowText(win.id))
+    def getSlotByAproxPosition(self, id, direction):
+        targetSlot = None
+        sourcePanel = self.getPanelWithWindow(id)
 
-        win.focus()
+        if sourcePanel is None:
+            print("No such window")
+            return
 
+        sourceSlot = sourcePanel.getSlotWithWindow(id)
 
-    def getSlotByAproxPosition(self, slot: slot, direction):
-        candidates = []
+        #In other panel 
         if direction == 'L':
-            candidates = self.assingment.getSlotsByMargin(slot.leftMargin, 'R')
-        if direction == 'R':
-            candidates = self.assingment.getSlotsByMargin(slot.rightMargin, 'L')
-        if direction == 'T':
-            candidates = self.assingment.getSlotsByMargin(slot.topMargin, 'B')
-        if direction == 'B':
-            candidates = self.assingment.getSlotsByMargin(slot.botMargin, 'T')
+            targetPanel = self.getPanelByMargin(sourcePanel.leftMargin, 'R')
+            if targetPanel is None:
+                return None
+            targetSlot = targetPanel.getSlotWithClosestTopMargin(sourceSlot.topMargin)
 
-        if len(candidates) == 0:
-            return None
+        elif direction == 'R':
+            targetPanel = self.getPanelByMargin(sourcePanel.rightMargin, 'L')
+            if targetPanel is None:
+                return None
+            targetSlot = targetPanel.getSlotWithClosestTopMargin(sourceSlot.topMargin)
 
-        if direction == 'L' or direction == 'R':
+        #Within panel
+        elif direction == 'U':
+            targetSlot = sourcePanel.getSlotByMargin(sourceSlot.topMargin, 'D')
+            pass
 
-            topVal = slot.topMargin.value
+        #Within panel
+        elif direction == 'D':
+            targetSlot = sourcePanel.getSlotByMargin(sourceSlot.botMargin, 'U')
+            pass
 
-            def diff(s: slot):
-                return abs(topVal-s.topMargin.value)
-            #Values of differences of top margins 
-            val = list(map(diff, candidates))
-
-            winner = candidates[val.index(min(val))]
-
-        else:
-            leftVal = slot.leftMargin.value
-
-            def diff(s: slot):
-                return abs(leftVal-s.leftMargin.value)
-            #Values of differences of top margins 
-            val = list(map(diff, candidates))
-
-            winner = candidates[val.index(min(val))]
-
-        # print(win32gui.GetWindowText(self.assingment.getWin(winner).id))
-        print("AproxPosition is slot", winner)
-
-        return winner
-
-
-
-    def __str__(self) -> str:
-        return str(self.slots)
-    
-    __repr__ = __str__
+        return targetSlot
 

@@ -1,5 +1,4 @@
-from window import window
-from workspace import workspace
+from workspace import workspace #type: ignore
 import win32gui, win32com.client
 import ctypes
 from ctypes import c_int
@@ -26,45 +25,38 @@ def getWindows():
     win32gui.EnumWindows( winEnumHandler, cntx )
     return cntx
 
-# print(getWindows())
-
-w = workspace(width=2560, height=1440-40)
-
-for hwnd in getWindows():
-    win = window(hwnd)
-    w.addWindow(win)
-    # input("Next?")
-
 def focusL():
     w.moveFocus(win32gui.GetForegroundWindow(), 'L')
 def focusR():
     w.moveFocus(win32gui.GetForegroundWindow(), 'R')
 def focusU():
-    w.moveFocus(win32gui.GetForegroundWindow(), 'T')
+    w.moveFocus(win32gui.GetForegroundWindow(), 'U')
 def focusD():
-    w.moveFocus(win32gui.GetForegroundWindow(), 'B')
+    w.moveFocus(win32gui.GetForegroundWindow(), 'D')
 
 def moveU():
-    w.moveSlotUp(w.assingment.getSlotByWindowId(win32gui.GetForegroundWindow()))
+    w.moveWindow(win32gui.GetForegroundWindow(), 'U')
 def moveD():
-    w.moveSlotDown(w.assingment.getSlotByWindowId(win32gui.GetForegroundWindow()))
+    w.moveWindow(win32gui.GetForegroundWindow(), 'D')
 def moveL():
-    w.moveSlotLeft(w.assingment.getSlotByWindowId(win32gui.GetForegroundWindow()))
+    w.moveWindow(win32gui.GetForegroundWindow(), 'L')
 def moveR():
-    w.moveSlotRight(w.assingment.getSlotByWindowId(win32gui.GetForegroundWindow()))
+    w.moveWindow(win32gui.GetForegroundWindow(), 'R')
+
+w = workspace(width=2560, height=1440-40)
+
+for hwnd in getWindows():
+    w.addNewWindow(hwnd)
 
 with keyboard.GlobalHotKeys({
-    # '<alt>+j': focusD,
-    # '<alt>+h': focusL,
-    # '<alt>+l': focusR,
-    # '<alt>+k': focusU,
-
     '<alt>+<shift>+j':moveD,
     '<alt>+<shift>+l':moveR,
     '<alt>+<shift>+k':moveU,
     '<alt>+<shift>+h':moveL,
+
+    '<alt>+j': focusD,
+    '<alt>+h': focusL,
+    '<alt>+l': focusR,
+    '<alt>+k': focusU,
 }) as h:
     h.join()
-
-
-
