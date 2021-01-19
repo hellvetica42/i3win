@@ -1,10 +1,12 @@
 import win32gui
-from panel import panel #type:ignore
-from i3utils import margin #type:ignore
+from panel import panel 
+from i3utils import margin 
 from math import floor
 
 class workspace():
-    def __init__(self, **resolution):
+    def __init__(self, monitorXValue, monitorYValue, **resolution):
+        self.monitorXValue = monitorXValue
+        self.monitorYValue = monitorYValue
         self.width = resolution['width']
         self.height = resolution['height']
         self.panels: panel = []
@@ -15,7 +17,7 @@ class workspace():
             return
         #If first panel
         if len(self.panels) == 0:
-            p = panel(self.height, margin(value=0), margin(value=self.width))
+            p = panel(self.height, self.monitorYValue, margin(value=self.monitorXValue), margin(value=self.monitorXValue+self.width))
             p.addNewWindow(id)
             p.update()
             self.panels.append(p)
@@ -33,24 +35,34 @@ class workspace():
 
             self.update()
 
+    def focus(self):
+        self.panels[0].slots[0].focus()
+
     def update(self):
         for p in self.panels:
             p.update()
 
     def addNewPanel(self) -> panel:
-        newPanel = panel(self.height, margin(value=0), margin(value=0))
+        newPanel = panel(self.height, self.monitorYValue, margin(value=0), margin(value=0))
         self.panels.append(newPanel)
 
         self.updateLayout()
 
         return newPanel
 
+    def getNumSlots(self):
+        sum = 0
+        for p in self.panels:
+            sum += len(p.slots)
+
+        return sum
+
     def updateLayout(self):
         panelWidth = floor(self.width / len(self.panels))
 
         margins = []
         for i in range(len(self.panels) + 1):
-            margins.append(margin(i*panelWidth))
+            margins.append(margin((i*panelWidth)+self.monitorXValue))
 
         for i, p in enumerate(self.panels):
             p.setMargins(margins[i], margins[i+1])

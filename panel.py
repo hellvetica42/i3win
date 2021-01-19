@@ -1,10 +1,11 @@
 import win32gui
-from i3utils import margin # type:ignore
-from slot import slot # type:ignore
+from i3utils import margin 
+from slot import slot 
 from math import floor
 
 class panel():
-    def __init__(self, height, leftMargin: margin, rightMargin:margin):
+    def __init__(self, height, monitorYValue, leftMargin: margin, rightMargin:margin):
+        self.monitorYValue = monitorYValue 
         self.height = height
         self.leftMargin = leftMargin
         self.rightMargin = rightMargin
@@ -23,7 +24,7 @@ class panel():
 
         margins = []
         for i in range(len(self.slots)+1):
-            margins.append(margin(i*slotHeight))
+            margins.append(margin((i*slotHeight)+self.monitorYValue))
 
         for s, i in zip(self.slots, range(len(self.slots))):
             s.setMargins(margins[i], margins[i+1])

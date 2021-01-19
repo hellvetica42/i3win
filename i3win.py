@@ -1,5 +1,5 @@
 from workspace import workspace #type: ignore
-import win32gui, win32com.client
+import win32gui, win32com.client, win32api
 import ctypes
 from ctypes import c_int
 import ctypes.wintypes
@@ -19,6 +19,15 @@ def winEnumHandler( hwnd, ctx ):
         if(isCloacked.value == 0):
             # print (hwnd, win32gui.GetWindowText( hwnd ))
             ctx.append(hwnd)
+
+workspaces = []
+
+monitors = win32api.EnumDisplayMonitors()
+for m in monitors:
+    workspaces.append(workspace(m[2][0], m[2][1], width=m[2][2]-m[2][0], height=m[2][3]-m[2][1] - 40))
+
+w = workspaces[0]
+
 
 def getWindows():
     cntx = []
@@ -43,10 +52,22 @@ def moveL():
 def moveR():
     w.moveWindow(win32gui.GetForegroundWindow(), 'R')
 
-w = workspace(width=2560, height=1440-40)
+def toggle():
+    global w 
+    if w == workspaces[0]:
+        w = workspaces[1]
+    else:
+        w = workspaces[0] 
+
+    w.focus()
+
+# w = workspace(width=2560, height=1440-40)
 
 for hwnd in getWindows():
-    w.addNewWindow(hwnd)
+    if workspaces[0].getNumSlots() < workspaces[1].getNumSlots():
+        workspaces[0].addNewWindow(hwnd)
+    else:
+        workspaces[1].addNewWindow(hwnd)
 
 with keyboard.GlobalHotKeys({
     '<alt>+<shift>+j':moveD,
@@ -58,5 +79,7 @@ with keyboard.GlobalHotKeys({
     '<alt>+h': focusL,
     '<alt>+l': focusR,
     '<alt>+k': focusU,
+
+    '<alt>+1': toggle,
 }) as h:
     h.join()
