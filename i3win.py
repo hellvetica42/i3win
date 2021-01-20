@@ -48,16 +48,19 @@ def moveL():
 def moveR():
     d.moveWindowDirection(win32gui.GetForegroundWindow(), 'R')
 
-# def toggle():
-#     global w 
-#     if w == workspaces[0]:
-#         w = workspaces[1]
-#     else:
-#         w = workspaces[0] 
+def ws0():
+    d.switchWorkspace(0)
+def ws1():
+    d.switchWorkspace(1)
+def ws2():
+    d.switchWorkspace(2)
+def ws3():
+    d.switchWorkspace(3)
+def ws4():
+    d.switchWorkspace(4)
 
-#     w.focus()
-
-# w = workspace(width=2560, height=1440-40)
+def draw():
+    d.drawWorkspaceTag()
 
 for hwnd in getWindows():
     d.addNewWindow(hwnd)
@@ -73,6 +76,11 @@ with keyboard.GlobalHotKeys({
     '<alt>+l': focusR,
     '<alt>+k': focusU,
 
-    # '<alt>+1': toggle,
+    '<alt>+0': ws0,
+    '<alt>+1': ws1,
+    '<alt>+2': ws2,
+    '<alt>+3': ws3,
+    '<alt>+4': ws4,
+    '<alt>+d': draw,
 }) as h:
     h.join()

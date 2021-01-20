@@ -36,8 +36,21 @@ class workspace():
 
             self.update()
 
+    def show(self):
+        for p in self.panels:
+            for s in p.slots:
+                s.show()
+        pass
+
+    def hide(self):
+        for p in self.panels:
+            for s in p.slots:
+                s.hide()
+        pass
+
     def focus(self):
-        self.panels[0].slots[0].focus()
+        if len(self.panels) != 0 and len(self.panels[0].slots) != 0:
+            self.panels[0].slots[0].focus()
 
     def focusSide(self, direction):
         target = None
@@ -57,13 +70,17 @@ class workspace():
 
     #Returns leftmost/rightmost slot
     def getSlotOnEdge(self, direction):
-
+        pT = 2 #Pixel tolerance
         for p in self.panels:
             if direction == 'R':
-                if self.monitorXValue == p.leftMargin.value:
+                print(self.monitorXValue, p.leftMargin.value)
+                print("R")
+                if p.leftMargin.value-pT < self.monitorXValue < p.leftMargin.value+pT:
                     return p.slots[0]
             elif direction == 'L':
-                if self.monitorXValue+self.width == p.rightMargin.value:
+                print(self.monitorXValue+self.width, p.rightMargin.value)
+                print("L")
+                if p.rightMargin.value - pT < self.monitorXValue+self.width < p.rightMargin.value + pT:
                     return p.slots[0]
 
             elif direction == 'U':

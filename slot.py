@@ -35,6 +35,14 @@ class slot():
             print("Error focusing")
             print(str(e))
 
+    def hide(self):
+        win32gui.ShowWindow(self.id, win32con.SW_MINIMIZE)
+        pass
+
+    def show(self):
+        win32gui.ShowWindow(self.id, win32con.SW_RESTORE)
+        pass
+
     def __eq__(self, o) -> bool:
         return self.id == o.id
     
