@@ -37,3 +37,6 @@ class slot():
 
     def __eq__(self, o) -> bool:
         return self.id == o.id
+    
+    def __str__(self) -> str:
+        return win32gui.GetWindowText(self.id)

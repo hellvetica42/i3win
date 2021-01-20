@@ -4,12 +4,13 @@ from i3utils import margin
 from math import floor
 
 class workspace():
-    def __init__(self, monitorXValue, monitorYValue, **resolution):
+    def __init__(self, id, monitorXValue, monitorYValue, **resolution):
         self.monitorXValue = monitorXValue
         self.monitorYValue = monitorYValue
         self.width = resolution['width']
         self.height = resolution['height']
         self.panels: panel = []
+        self.id = id
 
     def addNewWindow(self, id):
         if self.containsWindow(id):
@@ -38,9 +39,59 @@ class workspace():
     def focus(self):
         self.panels[0].slots[0].focus()
 
+    def focusSide(self, direction):
+        target = None
+        if direction == 'L':
+            target = self.getSlotOnEdge(direction)
+        elif direction == 'R':
+            target = self.getSlotOnEdge(direction)
+        elif direction == 'U':
+            pass
+        elif direction == 'D':
+            pass
+
+        if target is None:
+            print("Cant focus there. Not implemented")
+        else:
+            target.focus()
+
+    #Returns leftmost/rightmost slot
+    def getSlotOnEdge(self, direction):
+
+        for p in self.panels:
+            if direction == 'R':
+                if self.monitorXValue == p.leftMargin.value:
+                    return p.slots[0]
+            elif direction == 'L':
+                if self.monitorXValue+self.width == p.rightMargin.value:
+                    return p.slots[0]
+
+            elif direction == 'U':
+                print("Not impolemented")
+                return None
+            elif direction == 'D':
+                print("Not impolemented")
+                return None
+        return None
+
+
+    def getSurfaceCoef(self):
+        div = self.getNumSlots()
+        div = 1 if div == 0 else div
+
+        return (self.width * self.height) / div
+
     def update(self):
         for p in self.panels:
             p.update()
+
+    def removeWindow(self, id):
+        sourcePanel = self.getPanelWithWindow(id)
+        sourceSlot = sourcePanel.getSlotWithWindow(id)
+        if sourcePanel.removeSlot(sourceSlot):
+            self.panels.remove(sourcePanel)
+
+        self.updateLayout()
 
     def addNewPanel(self) -> panel:
         newPanel = panel(self.height, self.monitorYValue, margin(value=0), margin(value=0))
@@ -58,6 +109,8 @@ class workspace():
         return sum
 
     def updateLayout(self):
+        if len(self.panels) == 0:
+            return
         panelWidth = floor(self.width / len(self.panels))
 
         margins = []
@@ -127,7 +180,8 @@ class workspace():
     def moveFocus(self, id, direction):
         target = self.getSlotByAproxPosition(id, direction)
         if target is None:
-            print("Cant move focus. No target slot")
+            # print("Cant move focus. No target slot")
+            pass
         else:
             target.focus()
 

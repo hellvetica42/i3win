@@ -1,4 +1,5 @@
 from workspace import workspace #type: ignore
+from desktop import desktop
 import win32gui, win32com.client, win32api
 import ctypes
 from ctypes import c_int
@@ -20,14 +21,9 @@ def winEnumHandler( hwnd, ctx ):
             # print (hwnd, win32gui.GetWindowText( hwnd ))
             ctx.append(hwnd)
 
-workspaces = []
 
 monitors = win32api.EnumDisplayMonitors()
-for m in monitors:
-    workspaces.append(workspace(m[2][0], m[2][1], width=m[2][2]-m[2][0], height=m[2][3]-m[2][1] - 40))
-
-w = workspaces[0]
-
+d = desktop(monitors)
 
 def getWindows():
     cntx = []
@@ -35,39 +31,36 @@ def getWindows():
     return cntx
 
 def focusL():
-    w.moveFocus(win32gui.GetForegroundWindow(), 'L')
+    d.moveFocusDirection(win32gui.GetForegroundWindow(), 'L')
 def focusR():
-    w.moveFocus(win32gui.GetForegroundWindow(), 'R')
+    d.moveFocusDirection(win32gui.GetForegroundWindow(), 'R')
 def focusU():
-    w.moveFocus(win32gui.GetForegroundWindow(), 'U')
+    d.moveFocusDirection(win32gui.GetForegroundWindow(), 'U')
 def focusD():
-    w.moveFocus(win32gui.GetForegroundWindow(), 'D')
+    d.moveFocusDirection(win32gui.GetForegroundWindow(), 'D')
 
 def moveU():
-    w.moveWindow(win32gui.GetForegroundWindow(), 'U')
+    d.moveWindowDirection(win32gui.GetForegroundWindow(), 'U')
 def moveD():
-    w.moveWindow(win32gui.GetForegroundWindow(), 'D')
+    d.moveWindowDirection(win32gui.GetForegroundWindow(), 'D')
 def moveL():
-    w.moveWindow(win32gui.GetForegroundWindow(), 'L')
+    d.moveWindowDirection(win32gui.GetForegroundWindow(), 'L')
 def moveR():
-    w.moveWindow(win32gui.GetForegroundWindow(), 'R')
+    d.moveWindowDirection(win32gui.GetForegroundWindow(), 'R')
 
-def toggle():
-    global w 
-    if w == workspaces[0]:
-        w = workspaces[1]
-    else:
-        w = workspaces[0] 
+# def toggle():
+#     global w 
+#     if w == workspaces[0]:
+#         w = workspaces[1]
+#     else:
+#         w = workspaces[0] 
 
-    w.focus()
+#     w.focus()
 
 # w = workspace(width=2560, height=1440-40)
 
 for hwnd in getWindows():
-    if workspaces[0].getNumSlots() < workspaces[1].getNumSlots():
-        workspaces[0].addNewWindow(hwnd)
-    else:
-        workspaces[1].addNewWindow(hwnd)
+    d.addNewWindow(hwnd)
 
 with keyboard.GlobalHotKeys({
     '<alt>+<shift>+j':moveD,
@@ -80,6 +73,6 @@ with keyboard.GlobalHotKeys({
     '<alt>+l': focusR,
     '<alt>+k': focusU,
 
-    '<alt>+1': toggle,
+    # '<alt>+1': toggle,
 }) as h:
     h.join()
