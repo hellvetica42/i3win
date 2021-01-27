@@ -1,4 +1,4 @@
-import win32gui
+import win32gui #pylint: disable=import-error
 from panel import panel 
 from i3utils import margin 
 from math import floor
@@ -73,13 +73,9 @@ class workspace():
         pT = 2 #Pixel tolerance
         for p in self.panels:
             if direction == 'R':
-                print(self.monitorXValue, p.leftMargin.value)
-                print("R")
                 if p.leftMargin.value-pT < self.monitorXValue < p.leftMargin.value+pT:
                     return p.slots[0]
             elif direction == 'L':
-                print(self.monitorXValue+self.width, p.rightMargin.value)
-                print("L")
                 if p.rightMargin.value - pT < self.monitorXValue+self.width < p.rightMargin.value + pT:
                     return p.slots[0]
 

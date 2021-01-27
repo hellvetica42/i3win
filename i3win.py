@@ -1,11 +1,11 @@
-from workspace import workspace #type: ignore
+from workspace import workspace 
 from desktop import desktop
-import win32gui, win32com.client, win32api
+import win32gui, win32com.client, win32api #pylint: disable=import-error
 import ctypes
 from ctypes import c_int
 import ctypes.wintypes
 from ctypes.wintypes import HWND, DWORD
-from pynput import keyboard
+from pynput import keyboard #pylint: disable=import-error
 dwmapi = ctypes.WinDLL("dwmapi")
 DWMWA_CLOAKED = 14 
 isCloacked = c_int(0)
@@ -62,10 +62,13 @@ def ws4():
 def draw():
     d.drawWorkspaceTag()
 
+def quit():
+    h.stop()
+
 for hwnd in getWindows():
     d.addNewWindow(hwnd)
 
-with keyboard.GlobalHotKeys({
+h = keyboard.GlobalHotKeys({
     '<alt>+<shift>+j':moveD,
     '<alt>+<shift>+l':moveR,
     '<alt>+<shift>+k':moveU,
@@ -81,6 +84,8 @@ with keyboard.GlobalHotKeys({
     '<alt>+2': ws2,
     '<alt>+3': ws3,
     '<alt>+4': ws4,
-    '<alt>+d': draw,
-}) as h:
-    h.join()
+    '<alt>+-': draw,
+    '<alt>+q': quit,
+})
+h.start()
+h.join()

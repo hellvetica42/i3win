@@ -1,4 +1,4 @@
-import win32gui
+import win32gui #pylint: disable=import-error
 from i3utils import margin 
 from slot import slot 
 from math import floor

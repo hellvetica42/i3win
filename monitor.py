@@ -10,7 +10,8 @@ class monitor():
         self.id = id
         self.relativeMonitorcoordinates = (-300, -30)
 
-        self.workspaces.append(workspace(wsId, self.shape[0], self.shape[1], width=self.shape[2]-self.shape[0], height=self.shape[3]-self.shape[1] - 40))
+        self.workspaces.append(workspace(wsId, self.shape[0], self.shape[1], 
+                                         width=self.shape[2]-self.shape[0], height=self.shape[3]-self.shape[1] - 40))
 
         self.activeWorkspace: workspace = self.workspaces[0]
 
