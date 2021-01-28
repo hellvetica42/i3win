@@ -100,6 +100,11 @@ class workspace():
 
     def removeWindow(self, id):
         sourcePanel = self.getPanelWithWindow(id)
+
+        if sourcePanel is None:
+            print("Error cannot find panel")
+            return
+
         sourceSlot = sourcePanel.getSlotWithWindow(id)
         if sourcePanel.removeSlot(sourceSlot):
             self.panels.remove(sourcePanel)

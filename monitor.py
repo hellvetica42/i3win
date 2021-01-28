@@ -52,6 +52,12 @@ class monitor():
         self.activeWorkspace = target
         self.activeWorkspace.show()
 
+    def getWorkspaceById(self, id):
+        for w in self.workspaces:
+            if w.id == id:
+                return w
+        return None
+
     def addWindow(self, id):
         self.activeWorkspace.addNewWindow(id)
 
